@@ -2,7 +2,7 @@ require 'cgi'
 
 module BorrowDirect
   # Generate a "deep link" to query results in BD's native
-  # HTML interface. 
+  # HTML interface.
   class GenerateQuery
     PUNCT_STRIP_REGEX = /[[:space:]\)\(\]\[\;\:\.\,\\\/\"\<\>\!]/
 
@@ -27,7 +27,7 @@ module BorrowDirect
     #     :title, :author, :isbn, :subject, :keyword, :isbn, :issn
     #
     # For now, the value is always searched as a phrase, and multiple
-    # fields are always 'and'd.  We may enhance/expand later. 
+    # fields are always 'and'd.  We may enhance/expand later.
     #
     # Returns an un-escaped query, still needs to be put into a URL
     def build_query_with(options)
@@ -50,7 +50,7 @@ module BorrowDirect
 
     def query_url_with(arg)
       query = arg.kind_of?(Hash) ? build_query_with(arg) : arg.to_s
-      
+
       return add_query_param(self.url_base, "query", query).to_s
     end
 
@@ -58,7 +58,7 @@ module BorrowDirect
     # them to our suggestion for a good BD author-title keyword
     # search. Returns a hash suitable for passing to #query_url_with
     #
-    # Additional option :max_title_words, default 5. 
+    # Additional option :max_title_words, default 5.
     def normalized_author_title_params(options)
       raise ArgumentError.new("Need a Hash argument, got #{options.inspect}") unless options.kind_of?(Hash)
 
@@ -68,22 +68,22 @@ module BorrowDirect
       title           = options[:title].dup  if options[:title]
       author          = options[:author].dup if options[:author]
 
-      
+
       title  = normalized_title(title, :max_title_words => options[:max_title_words])
       author = normalized_author(author)
 
       results = {}
       results[:title] = title if title && ! title.empty?
       results[:author] = author if author && ! author.empty?
-      
+
       return results
     end
 
-    # :title, :author and optionally :max_title_words. 
+    # :title, :author and optionally :max_title_words.
     #
     # Returns a query with a suggested normalized author and title
     # for best BD search. May return just BD base URL if no author/title
-    # given. 
+    # given.
     def normalized_author_title_query(options)
       return self.query_url_with self.normalized_author_title_params(options)
     end
@@ -92,9 +92,9 @@ module BorrowDirect
       return "" if title.nil? || title.empty?
 
       max_title_words = args[:max_title_words] || 5
- 
+
       # Remove all things in parens at the END of the title, they tend
-      # to be weird addendums. 
+      # to be weird addendums.
       title.gsub!(/\([^)]*\)\s*$/, '')
 
       # Strip the subtitle or other weird titles, just keep the text
@@ -104,7 +104,7 @@ module BorrowDirect
 
       # We want to remove some punctuation that is better
       # turned into a space in the query. Along with
-      # any kind of unicode space, why not. 
+      # any kind of unicode space, why not.
       title.gsub!(PUNCT_STRIP_REGEX, ' ')
 
       # compress any remaining whitespace
@@ -123,7 +123,7 @@ module BorrowDirect
     end
 
     # Lowercase, and try to get just the last name out of something
-    # that looks like a cataloging authorized heading. 
+    # that looks like a cataloging authorized heading.
     #
     # Try to remove leading 'by' stuff when we're getting a 245c
     def normalized_author(author)
@@ -133,7 +133,7 @@ module BorrowDirect
       author = author.downcase
       # Just take everything before the comma/semicolon if we have one --
       # or before an "and", for stripping individuals out of 245c
-      # multiples. 
+      # multiples.
       if author =~ /\A([^,;]*)(,|\sand\s|;)/
         author = $1
       end
@@ -143,7 +143,7 @@ module BorrowDirect
 
       # We want to remove some punctuation that is better
       # turned into a space in the query. Along with
-      # any kind of unicode space, why not. 
+      # any kind of unicode space, why not.
       author.gsub!(PUNCT_STRIP_REGEX, ' ')
 
       # compress any remaining whitespace
@@ -153,16 +153,16 @@ module BorrowDirect
       return author
     end
 
-    
 
-    # Escape a query value. 
+
+    # Escape a query value.
     # We don't really know how to escape, for now
-    # we just remove double quotes and parens, and replace with spaces. 
-    # those seem to cause problems, and that seems to work. 
+    # we just remove double quotes and parens, and replace with spaces.
+    # those seem to cause problems, and that seems to work.
     def self.escape(str)
       str.gsub(/[")()]/, ' ')
     end
-    # Instance method version for convenience. 
+    # Instance method version for convenience.
     def escape(str)
       self.class.escape(str)
     end
@@ -170,17 +170,16 @@ module BorrowDirect
     def add_query_param(uri, key, value)
       uri = URI.parse(uri) unless uri.kind_of? URI
 
-      query_param = "#{CGI.escape key}=#{CGI.escape value}"
+      query_param = "#{CGI.escape key}=#{URI.encode value}"
 
       if uri.query
         uri.query += "&" + query_param
       else
         uri.query = query_param
       end
-      
+
       return uri
     end
-
 
   end
 end
