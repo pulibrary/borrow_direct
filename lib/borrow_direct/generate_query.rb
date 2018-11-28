@@ -169,8 +169,9 @@ module BorrowDirect
 
     def add_query_param(uri, key, value)
       uri = URI.parse(uri) unless uri.kind_of? URI
+      escaped_value = CGI.escape value
 
-      query_param = "#{CGI.escape key}=#{URI.encode value}"
+      query_param = "#{CGI.escape key}=#{escaped_value.gsub('+', '%20')}"
 
       if uri.query
         uri.query += "&" + query_param
